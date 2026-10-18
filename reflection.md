@@ -7,6 +7,25 @@
 - Briefly describe your initial UML design.
 - What classes did you include, and what responsibilities did you assign to each?
 
+4 Classes:
+- Owner { name, preferences, time availability }
+- Pet { name, species, age, preferred tasks/care }
+- Tasks/Care { name, category, duration, priority level, scheduled time occurence }
+- Daily plan { list of scheduled tasks, date day, duration of tasks, reasoning for plan chosen }
+
+Methods to include: 
+- addTask(): allow the user (owner) to add a new task to their schedule
+- editTask(): allow the user to edit an existing task (including the duration of it and its priority level)
+- removeTask(): allow the user to remove an existing task and all its data
+- addPet(): allow user to add a new pet to their application 
+- editPet(): allow user to edit any information pertaining to the selected pet
+- generatePlan(): create a new daily schedule based on constraints and priorities
+- sortTasksByPriority(): sorts the tasks by priority level, ensuring higher priority tasks are first on schedule
+- sortTasksByTime(): check which tasks fit into the schedule (after considering priority) and allow tasks that fit to be placed on the schedule
+- explainReasoning(): once a schedule is created, explain the reasoning for tasks and order to user
+
+
+
 **b. Design changes**
 
 - Did your design change during implementation?
