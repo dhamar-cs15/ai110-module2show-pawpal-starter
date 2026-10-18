@@ -31,6 +31,17 @@ Methods to include:
 - Did your design change during implementation?
 - If yes, describe at least one change and why you made it.
 
+The design didn't change much during implementation. I kept the same four classes I decided above in the brainstorming phase. No new methods were added but something interesting that I did notice that the AI did was define the add_pet, edit_pet within the owner class. While these are actions only the owner can do, I think I would have initially thought that the method edit_pet could at least be placed under the Pet class since that's the class that will be holding the data that will be edited. 
+
+Post asking the AI to review my skeleton, changes made:
+- the AI identified that the relationship between tasks and pets was unclear. To address this, we implemented a new list in the Pet class, called care_tasks that is a collection of tasks specifically associated with that pet.
+
+- the AI also broke apart the responsibilities assigned to the original class DailyPlan, which took care of both scheduling behavior (such as sorting tasks and figuring out durations) and generating the daily plan. Now, we have a new class called Scheduler, which is responsible for the planning operations while DailyPlan can take care of the result (the finalized plan that's generated)
+
+- the AI also said my definition of scheduled_time was ambiguous (I didn't specify whether it meant a specific time, a range, or a frequency). Therefore, it broke this field into different variables (time_window_start and time_window_end) which can provide more information and are more flexible for use. It also added a new class Recurrence for tasks that occur repeatedly or at certain intervals
+
+
+
 ---
 
 ## 2. Scheduling Logic and Tradeoffs

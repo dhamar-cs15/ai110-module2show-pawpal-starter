@@ -1,94 +1,128 @@
-"""Data models and method stubs for the PawPal+ pet care planner."""
+"""Data models and scheduling interface for the PawPal+ pet care planner."""
 
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import date
+from datetime import date, time
+from enum import Enum
+from uuid import UUID, uuid4
+
+
+class Recurrence(str, Enum):
+    """How often a care task repeats."""
+
+    ONCE = "once"
+    DAILY = "daily"
+    WEEKLY = "weekly"
 
 
 @dataclass
 class CareTask:
-    """A care activity that may be included in a pet's daily plan."""
+    """A care activity associated with a specific pet."""
 
     name: str
     category: str
     duration_minutes: int
     priority_level: str
-    scheduled_time_occurrence: str
+    recurrence: Recurrence = Recurrence.DAILY
+    time_window_start: time | None = None
+    time_window_end: time | None = None
+    id: UUID = field(default_factory=uuid4)
 
 
 @dataclass
 class Pet:
-    """A pet and its preferred care activities."""
+    """A pet and the care tasks associated with it."""
 
     name: str
     species: str
     age: int
-    preferred_tasks: list[CareTask] = field(default_factory=list)
+    care_tasks: list[CareTask] = field(default_factory=list)
+    id: UUID = field(default_factory=uuid4)
+
+
+@dataclass
+class DailyPlan:
+    """The selected, ordered care tasks for one pet on one date."""
+
+    pet_id: UUID
+    date: date
+    scheduled_tasks: list[CareTask] = field(default_factory=list)
+    reasoning: str = ""
+    id: UUID = field(default_factory=uuid4)
+
+    @property
+    def total_duration_minutes(self) -> int:
+        """Calculate total planned time from the tasks in this plan."""
+        return sum(task.duration_minutes for task in self.scheduled_tasks)
 
 
 @dataclass
 class Owner:
-    """An owner, their preferences, pets, tasks, and available time."""
+    """An owner, their preferences, pets, and generated plans."""
 
     name: str
     preferences: str
     time_availability_minutes: int
     pets: list[Pet] = field(default_factory=list)
-    tasks: list[CareTask] = field(default_factory=list)
     daily_plans: list[DailyPlan] = field(default_factory=list)
+    id: UUID = field(default_factory=uuid4)
 
-    def add_task(self, task: CareTask) -> None:
-        """Add a care task to the owner's task collection."""
+    def add_task(self, pet_id: UUID, task: CareTask) -> None:
+        """Add a care task to the specified pet."""
         raise NotImplementedError
 
-    def edit_task(self, task: CareTask) -> None:
-        """Update an existing care task."""
+    def edit_task(
+        self,
+        pet_id: UUID,
+        task_id: UUID,
+        updated_task: CareTask,
+    ) -> None:
+        """Replace a task identified by its pet and task IDs."""
         raise NotImplementedError
 
-    def remove_task(self, task: CareTask) -> None:
-        """Remove a care task from the owner's task collection."""
+    def remove_task(self, pet_id: UUID, task_id: UUID) -> None:
+        """Remove a task identified by its pet and task IDs."""
         raise NotImplementedError
 
     def add_pet(self, pet: Pet) -> None:
-        """Add a pet to the owner's pet collection."""
+        """Add a pet to the owner's collection."""
         raise NotImplementedError
 
-    def edit_pet(self, pet: Pet) -> None:
-        """Update an existing pet."""
+    def edit_pet(self, pet_id: UUID, updated_pet: Pet) -> None:
+        """Replace a pet identified by its ID."""
         raise NotImplementedError
 
 
 @dataclass
-class DailyPlan:
-    """A day's scheduled care tasks and the reasoning behind the plan."""
-
-    scheduled_tasks: list[CareTask]
-    date: date
-    total_duration_minutes: int
-    reasoning: str
+class Scheduler:
+    """Select and order a pet's care tasks within the owner's constraints."""
 
     def generate_plan(
         self,
         owner: Owner,
         pet: Pet,
-        tasks: list[CareTask],
+        plan_date: date,
     ) -> DailyPlan:
-        """Build a plan for a pet using the owner's constraints and tasks."""
+        """Create a daily plan from the pet's tasks and owner constraints."""
         raise NotImplementedError
 
     def sort_tasks_by_priority(self, tasks: list[CareTask]) -> list[CareTask]:
         """Return tasks ordered by priority."""
         raise NotImplementedError
 
-    def sort_tasks_by_time(
+    def select_tasks_within_time(
         self,
         tasks: list[CareTask],
         available_minutes: int,
     ) -> list[CareTask]:
-        """Return tasks that fit within the available time."""
+        """Select tasks that fit within the available time."""
         raise NotImplementedError
 
-    def explain_reasoning(self) -> str:
-        """Return an explanation for the selected tasks and their order."""
+    def explain_reasoning(
+        self,
+        selected_tasks: list[CareTask],
+        skipped_tasks: list[CareTask],
+    ) -> str:
+        """Explain why tasks were selected, ordered, or skipped."""
         raise NotImplementedError

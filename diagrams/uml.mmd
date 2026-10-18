@@ -1,42 +1,66 @@
 classDiagram
     class Owner {
+        +UUID id
         +String name
         +String preferences
-        +int timeAvailabilityMinutes
-        +addTask(task)
-        +editTask(task)
-        +removeTask(task)
-        +addPet(pet)
-        +editPet(pet)
+        +int time_availability_minutes
+        +List~Pet~ pets
+        +List~DailyPlan~ daily_plans
+        +add_task(pet_id, task)
+        +edit_task(pet_id, task_id, updated_task)
+        +remove_task(pet_id, task_id)
+        +add_pet(pet)
+        +edit_pet(pet_id, updated_pet)
     }
 
     class Pet {
+        +UUID id
         +String name
         +String species
         +int age
-        +List~CareTask~ preferredTasks
+        +List~CareTask~ care_tasks
     }
 
     class CareTask {
+        +UUID id
         +String name
         +String category
-        +int durationMinutes
-        +String priorityLevel
-        +String scheduledTimeOccurrence
+        +int duration_minutes
+        +String priority_level
+        +Recurrence recurrence
+        +time time_window_start
+        +time time_window_end
     }
 
     class DailyPlan {
-        +List~CareTask~ scheduledTasks
+        +UUID id
+        +UUID pet_id
         +Date date
-        +int totalDurationMinutes
+        +List~CareTask~ scheduled_tasks
         +String reasoning
-        +generatePlan(owner, pet, tasks)
-        +sortTasksByPriority(tasks)
-        +sortTasksByTime(tasks, availableMinutes)
-        +explainReasoning()
+        +total_duration_minutes
     }
 
-    Owner "1" o-- "0..*" Pet : cares for
-    Owner "1" --> "0..*" DailyPlan : creates
-    Pet "1" --> "0..*" CareTask : has care tasks
+    class Scheduler {
+        +generate_plan(owner, pet, plan_date)
+        +sort_tasks_by_priority(tasks)
+        +select_tasks_within_time(tasks, available_minutes)
+        +explain_reasoning(selected_tasks, skipped_tasks)
+    }
+
+    class Recurrence {
+        <<enumeration>>
+        ONCE
+        DAILY
+        WEEKLY
+    }
+
+    Owner "1" o-- "0..*" Pet : owns
+    Owner "1" o-- "0..*" DailyPlan : keeps
+    Pet "1" *-- "0..*" CareTask : has care tasks
     DailyPlan "1" o-- "0..*" CareTask : schedules
+    DailyPlan --> Pet : for
+    Scheduler ..> Owner : reads constraints
+    Scheduler ..> Pet : reads care tasks
+    Scheduler ..> DailyPlan : generates
+    CareTask --> Recurrence : repeats
