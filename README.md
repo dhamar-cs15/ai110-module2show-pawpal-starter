@@ -83,7 +83,26 @@ Sample test output:
 
 ```
 # Paste your pytest output here
+DESCRIPTION OF TESTS:
+Some tests like test_organize_tasks_sorts_chronologically make sure that the ordering is completed and that even after sorting, the original input list is left unchanged.
+Test_time_conflict_warning_flags_tasks_with_duplicate_start_times makes sure that tasks that start at the same time are flagged becuase they conflict with each other. 
+test_marking_daily_task_complete_creates_following_day_occurrence makes sure that after a recurring task has been marked complete for the current occurrence, a new instance is created for the next day when the task needs to be scheduled again.
+
+python -m pytest
+========================================================= test session starts =========================================================
+platform darwin -- Python 3.9.6, pytest-8.4.2, pluggy-1.6.0
+rootdir: /Users/dhamarcarrillo/Documents/Github/Codepath_AI110/ai110-module2show-pawpal-starter
+collected 21 items                                                                                                                    
+
+tests/test_pawpal.py ..                                                                                                         [  9%]
+tests/test_pawpal_system.py ...................                                                                                 [100%]
+
+========================================================= 21 passed in 0.02s ==========================================================
+
 ```
+
+## Phase 5: Confidence Level Post-Tests
+Based on all the tests passing from the first try, my confidence level would be a 4. This means that the system is currently efficient, but I wouldn't be 100% confident about it. There might be edge cases that we have not thought of and nuance that the system doesn't understand at the moment. For example, if an owner has two dogs that can both be walked at the same time, would the system see this as conflicting tasks? In this case, they wouldn't necesssarily be conflicting tasks since they can be done simultaneously, but other situations like bathing a cat and bathing a dog should probably not be done at the same time. At the moment, the system doesn't have a way to differentiate these kinds of situations and would simply mark all tasks that overlap with a conflict warning.
 
 ## 📐 Smarter Scheduling
 

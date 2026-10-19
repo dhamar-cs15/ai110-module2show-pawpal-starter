@@ -57,6 +57,18 @@ def test_scheduler_prioritizes_tasks_and_skips_ones_that_do_not_fit() -> None:
     assert schedule == [high, low]
 
 
+def test_organize_tasks_sorts_chronologically() -> None:
+    late = make_task("Evening meal", 10, scheduled_time=time(18, 0))
+    early = make_task("Breakfast", 10, scheduled_time=time(7, 30))
+    middle = make_task("Afternoon walk", 20, scheduled_time=time(14, 0))
+    tasks = [late, early, middle]
+
+    organized = Scheduler().organize_tasks(tasks)
+
+    assert organized == [early, middle, late]
+    assert tasks == [late, early, middle]
+
+
 def test_find_time_conflicts_detects_overlaps_for_same_and_different_pets() -> None:
     mochi = Pet("Mochi", "dog", 3)
     biscuit = Pet("Biscuit", "cat", 5)
@@ -83,6 +95,18 @@ def test_find_time_conflicts_detects_overlaps_for_same_and_different_pets() -> N
         (same_pet_first, other_pet_overlap),
         (same_pet_overlap, other_pet_overlap),
     ]
+
+
+def test_time_conflict_warning_flags_tasks_with_duplicate_start_times() -> None:
+    first = make_task("Breakfast", 10, scheduled_time=time(8, 0))
+    second = make_task("Medication", 5, scheduled_time=time(8, 0))
+
+    warning = Scheduler().get_time_conflict_warning([first, second])
+
+    assert warning is not None
+    assert "1 time conflict" in warning
+    assert "Breakfast" in warning
+    assert "Medication" in warning
 
 
 def test_find_time_conflicts_ignores_untimed_and_adjacent_tasks() -> None:
@@ -175,7 +199,7 @@ def test_task_management_targets_the_selected_pet_and_id() -> None:
     assert owner.get_all_tasks() == []
 
 
-def test_scheduler_marks_task_complete_across_all_pets() -> None:
+def test_marking_daily_task_complete_creates_following_day_occurrence() -> None:
     pet = Pet("Mochi", "dog", 3)
     task = make_task("Medication", 5)
     pet.add_task(task)
