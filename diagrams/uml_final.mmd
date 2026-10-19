@@ -1,0 +1,74 @@
+classDiagram
+    class Task {
+        +String description
+        +int duration_minutes
+        +String priority_level
+        +Frequency frequency
+        +time? scheduled_time
+        +date? scheduled_date
+        +Set~int~ days_of_week
+        +bool completed
+        +Set~date~ completed_dates
+        +UUID id
+        +UUID? pet_id
+        +__post_init__()
+        +is_due_on(day: date) bool
+        +occurs_on(day: date) bool
+        +mark_complete(completed_on: date?) void
+    }
+
+    class Pet {
+        +String name
+        +String species
+        +int age
+        +List~Task~ care_tasks
+        +UUID id
+        +add_task(task: Task) void
+        +edit_task(task_id: UUID, updated_task: Task) void
+        +remove_task(task_id: UUID) Task
+        -_task_index(task_id: UUID) int
+    }
+
+    class Owner {
+        +String name
+        +String preferences
+        +int time_availability_minutes
+        +List~Pet~ pets
+        +UUID id
+        +__post_init__()
+        +add_pet(pet: Pet) void
+        +get_pet(pet_id: UUID) Pet
+        +remove_pet(pet_id: UUID) Pet
+        +add_task(pet_id: UUID, task: Task) void
+        +edit_task(pet_id: UUID, task_id: UUID, updated_task: Task) void
+        +remove_task(pet_id: UUID, task_id: UUID) Task
+        +get_all_tasks() List~Task~
+    }
+
+    class Scheduler {
+        +PRIORITY_ORDER
+        +get_tasks(owner: Owner, plan_date: date?, include_completed: bool) List~Task~
+        +filter_tasks(owner: Owner, completed: bool?, pet_name: str?) List~Task~
+        +organize_tasks(tasks: List~Task~) List~Task~
+        +find_time_conflicts(tasks: List~Task~) List~Tuple~
+        +get_time_conflict_warning(tasks: List~Task~) str?
+        +generate_schedule(owner: Owner, plan_date: date, available_minutes: int?) List~Task~
+        +mark_task_complete(owner: Owner, task_id: UUID, completed_on: date?) void
+    }
+
+    class Frequency {
+        <<enumeration>>
+        ONCE
+        DAILY
+        WEEKLY
+    }
+
+    Owner "1" o-- "0..*" Pet : manages
+    Pet "1" *-- "0..*" Task : stores care tasks
+    Task --> Frequency : recurrence pattern
+
+    Scheduler ..> Owner : retrieves and filters tasks
+    Scheduler ..> Task : checks due status, sorts, detects conflicts
+    Scheduler ..> Pet : adds next recurring occurrence
+
+    note for Scheduler "Schedule generation selects due tasks in scheduled-time order while they fit the minute budget. Priority is stored on Task but does not currently determine selection. Conflicts are reported as warnings; overlapping tasks remain in the schedule."

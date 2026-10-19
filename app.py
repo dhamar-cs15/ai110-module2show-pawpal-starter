@@ -134,7 +134,7 @@ if owner.pets:
                     "Priority": task.priority_level,
                     "Frequency": task.frequency.value,
                 }
-                for task in all_tasks
+                for task in scheduler.organize_tasks(all_tasks)
             ],
             hide_index=True,
             use_container_width=True,
@@ -145,24 +145,32 @@ if owner.pets:
 st.divider()
 st.subheader("Today's schedule")
 st.caption(
-    "Tasks are selected across all your pets by priority and available minutes. "
+    "Tasks are selected across all your pets by scheduled time and available minutes. "
     "Overlapping fixed-time tasks are flagged below."
 )
 
 if st.button("Generate schedule"):
-    schedule = scheduler.generate_schedule(owner, plan_date)
+    schedule = scheduler.organize_tasks(
+        scheduler.generate_schedule(owner, plan_date)
+    )
     if schedule:
-        for task in schedule:
-            pet_name_for_task = pet_names_by_id[task.pet_id]
-            task_time_label = (
-                task.scheduled_time.strftime("%H:%M")
-                if task.scheduled_time
-                else "Time not set"
-            )
-            st.write(
-                f"**{task_time_label} — {task.description}** for {pet_name_for_task} "
-                f"({task.duration_minutes} min; {task.priority_level} priority)"
-            )
+        st.success(f"Generated a schedule with {len(schedule)} task(s).")
+        st.table(
+            [
+                {
+                    "Time": (
+                        task.scheduled_time.strftime("%H:%M")
+                        if task.scheduled_time
+                        else "Time not set"
+                    ),
+                    "Task": task.description,
+                    "Pet": pet_names_by_id[task.pet_id],
+                    "Duration (min)": task.duration_minutes,
+                    "Priority": task.priority_level.capitalize(),
+                }
+                for task in schedule
+            ]
+        )
         conflict_warning = scheduler.get_time_conflict_warning(schedule)
         if conflict_warning:
             st.warning(conflict_warning)

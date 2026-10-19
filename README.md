@@ -104,43 +104,53 @@ tests/test_pawpal_system.py ...................                                 
 ## Phase 5: Confidence Level Post-Tests
 Based on all the tests passing from the first try, my confidence level would be a 4. This means that the system is currently efficient, but I wouldn't be 100% confident about it. There might be edge cases that we have not thought of and nuance that the system doesn't understand at the moment. For example, if an owner has two dogs that can both be walked at the same time, would the system see this as conflicting tasks? In this case, they wouldn't necesssarily be conflicting tasks since they can be done simultaneously, but other situations like bathing a cat and bathing a dog should probably not be done at the same time. At the moment, the system doesn't have a way to differentiate these kinds of situations and would simply mark all tasks that overlap with a conflict warning.
 
-## 📐 Smarter Scheduling
+## ✨ Features
 
-> Fill in once you've implemented scheduling logic.
-
-| Feature | Method(s) | Notes |
-|---------|-----------|-------|
-| Task sorting | | e.g., by priority, duration |
-| Filtering | | e.g., skip tasks if time runs out |
-| Conflict handling | | e.g., overlapping time slots |
-| Recurring tasks | | e.g., daily vs. weekly |
-
-## Bullet point/paragraph version of Smarter Scheduling section (Phase 4)
-Task Sorting
-- Methods: Scheduler.organize_tasks()
-- What it does: it sorts the tasks by scheduled start time, in chronological order. if there are any tasks that don't have a specified scheduled time, they will go last and be given least priority
-
-Filtering
-- Methods: Scheduler.filter_tasks()
-- What it does: it can filter the owner's tasks either by pet name, completion status, or both. This allows the program to separate tasks pertaining to only one pet, or all tasks that still need to be done (or both)
-
-Conflict handling:
-- Methods: Scheduler.find_time_conflicts(), Scheduler.get_time_conflict_warning()
-- What it does: it's able to find the tasks that have a conflict (times overlap) and ignores any tasks that don't have a specified time. if there is a conflict, it makes sure to raise this as a warning so that the user knows that there are tasks trying to be scheduled at the same time 
-
-Recurring task logic:
-- Methods: Scheduler.mark_task_complete()
-- What it does: If a task is recurring, this feature looks out for when it gets completed. Once it is completed, it creates the next dated occurrence (such as for the next day if daily, or the same day in the next week)
+- **Chronological sorting:** `Scheduler.organize_tasks()` sorts tasks by scheduled start time. Tasks without a time appear last, and tasks with equal start times preserve their input order.
+- **Task filtering:** `Scheduler.filter_tasks()` filters by completion status, pet name, or both. Pet-name matching ignores capitalization and surrounding whitespace.
+- **Daily schedule selection:** `Scheduler.generate_schedule()` selects tasks due on the chosen date and adds them in time order while they fit within the available-minute budget. A task that does not fit is skipped, and the scheduler continues checking later tasks.
+- **Conflict warnings:** `Scheduler.find_time_conflicts()` detects overlapping time intervals among tasks with start times; untimed tasks are ignored. `Scheduler.get_time_conflict_warning()` describes any conflicts. These warnings are informational: overlapping tasks stay in the generated schedule. A task ending exactly when another begins is not considered a conflict.
+- **Recurring tasks:** Tasks can be one-time, daily, or weekly. Completing a daily or weekly task through `Scheduler.mark_task_complete()` marks that occurrence complete and creates its next dated occurrence for the same pet. Weekly tasks advance to the next configured weekday. One-time tasks do not create another occurrence.
+- **Priority is recorded, not used for selection:** Tasks display their priority, but the schedule currently selects tasks by start time and available minutes rather than ranking them by priority.
 
 
 ## 📸 Demo Walkthrough
 
+MAIN UI FEATURES: 
+- input for entering owner's name, available time, and plan date
+- input to add pets with name, species, and age
+- input to add care tasks for selected pet, specifying a description, duration, priority, frequency, and preferred start time
+- button to generate a schedule for the day and display of any warnings
+
 Describe your app in numbered steps so a reader can follow along without watching a video:
 
-1. <!-- Describe this step -->
-2. <!-- Describe this step -->
-3. <!-- Describe this step -->
-4. <!-- Describe this step -->
-5. <!-- Add more steps as needed -->
+1. First, the owner enters their name, available minutes for pet care time, and what date to plan a schedule for. 
+2. Then, the owner can add their first pet. For example, Luna who is a 6 year old dog. A table of any pets the owner adds will be displayed below the input section. 
+3. For each pet, the owner can add tasks at a specific start time, such as Luna's breakfast at 7:30am and a walk around the park at 8:15am, with durations, priority, and frequency.
+4. Afterwards, click 'Generate Schedule' to see the selected tasks ordered by start time, with details about which pet they are assigned to, the duration of each, and the priority levels.
+5. Finally, the owner can review if the schedule is accurate and if there are any warnings, such as tasks that overlap at the same time. 
+
+
+FINAL SAMPLE OUTPUT
+```
+Today's Schedule — Sunday, October 18, 2026
+07:30 — Breakfast for Mochi (10 min, high priority, incomplete)
+07:30 — Feed Biscuit for Biscuit (5 min, medium priority, incomplete)
+08:00 — Morning walk for Mochi (30 min, high priority, incomplete)
+WARNING: Schedule generated with 1 time conflict(s): 'Breakfast' overlaps with 'Feed Biscuit'.
+
+All tasks sorted by scheduled time:
+07:30 — Breakfast for Mochi (10 min, high priority, incomplete)
+07:30 — Feed Biscuit for Biscuit (5 min, medium priority, incomplete)
+08:00 — Morning walk for Mochi (30 min, high priority, incomplete)
+Time TBD — Trim nails for Biscuit (15 min, low priority, completed)
+
+Incomplete tasks for Mochi:
+07:30 — Breakfast for Mochi (10 min, high priority, incomplete)
+08:00 — Morning walk for Mochi (30 min, high priority, incomplete)
+
+Completed tasks:
+Time TBD — Trim nails for Biscuit (15 min, low priority, completed)
+```
 
 **Screenshot or video** *(optional)*: <!-- Insert a screenshot or link to a demo video here -->
