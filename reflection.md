@@ -65,10 +65,15 @@ Post asking the AI to review my skeleton, changes made:
 - How did you use AI tools during this project (for example: design brainstorming, debugging, refactoring)?
 - What kinds of prompts or questions were most helpful?
 
+I used AI for the parts in the assignment that suggested to ask the AI chatbot to do a certain thing. Most of implementation process was done by AI. It fleshed out the logic in pawpal_system.py and main.py. I would ask it to explain what it had built and how it worked-- that way I understood it enough to know what the intentions were and if the code actually accomplished those intentions. 
+
 **b. Judgment and verification**
 
 - Describe one moment where you did not accept an AI suggestion as-is.
 - How did you evaluate or verify what the AI suggested?
+
+Schedule inconsistency / conflict management
+
 
 ---
 

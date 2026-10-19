@@ -54,6 +54,21 @@ Paste a sample of your app's CLI or Streamlit output here so a reader can see wh
 #   ...
 ```
 
+```
+SAMPLE OUTPUT 1:
+
+Today's Schedule — Sunday, October 18, 2026
+07:30 — Breakfast for Mochi (10 min, high priority)
+08:00 — Morning walk for Mochi (30 min, high priority)
+08:15 — Feed Biscuit for Biscuit (5 min, medium priority)
+```
+
+
+## Implementation Summary
+PHASE 2
+The four main classes have been thoroughly implemented. Task takes care of one activity at a time, keeping track of its duration, priority, frequency, and completion status. Pet stores all the information pertaining the pet itself, and is where all the task methods live, since any task added pertains to one specific pet at a time. Since the task methods live here, when a task is created/edited, it will pull its "template" information from the Task class. 
+The Owner class has information about the owner and a list of their pets; this means the owner class will be interacting with the pet class to create instances for each of the pets the owner has. Finally, the Scheduler class retrieveds, filters, and organizes tasks; it's able to do this because it has information from the owner class (such as time preferences) and the pet class (such as tasks already assigned to that pet).
+
 ## 🧪 Testing PawPal+
 
 ```bash

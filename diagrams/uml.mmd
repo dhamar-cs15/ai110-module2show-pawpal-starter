@@ -1,16 +1,19 @@
 classDiagram
-    class Owner {
+    class Task {
         +UUID id
-        +String name
-        +String preferences
-        +int time_availability_minutes
-        +List~Pet~ pets
-        +List~DailyPlan~ daily_plans
-        +add_task(pet_id, task)
-        +edit_task(pet_id, task_id, updated_task)
-        +remove_task(pet_id, task_id)
-        +add_pet(pet)
-        +edit_pet(pet_id, updated_pet)
+        +UUID pet_id
+        +String description
+        +int duration_minutes
+        +String priority_level
+        +Frequency frequency
+        +time scheduled_time
+        +Date scheduled_date
+        +Set~int~ days_of_week
+        +bool completed
+        +Set~Date~ completed_dates
+        +is_due_on(day)
+        +occurs_on(day)
+        +mark_complete(completed_on)
     }
 
     class Pet {
@@ -18,49 +21,43 @@ classDiagram
         +String name
         +String species
         +int age
-        +List~CareTask~ care_tasks
+        +List~Task~ care_tasks
+        +add_task(task)
+        +edit_task(task_id, updated_task)
+        +remove_task(task_id)
     }
 
-    class CareTask {
+    class Owner {
         +UUID id
         +String name
-        +String category
-        +int duration_minutes
-        +String priority_level
-        +Recurrence recurrence
-        +time time_window_start
-        +time time_window_end
-    }
-
-    class DailyPlan {
-        +UUID id
-        +UUID pet_id
-        +Date date
-        +List~CareTask~ scheduled_tasks
-        +String reasoning
-        +total_duration_minutes
+        +String preferences
+        +int time_availability_minutes
+        +List~Pet~ pets
+        +add_pet(pet)
+        +get_pet(pet_id)
+        +remove_pet(pet_id)
+        +add_task(pet_id, task)
+        +edit_task(pet_id, task_id, updated_task)
+        +remove_task(pet_id, task_id)
+        +get_all_tasks()
     }
 
     class Scheduler {
-        +generate_plan(owner, pet, plan_date)
-        +sort_tasks_by_priority(tasks)
-        +select_tasks_within_time(tasks, available_minutes)
-        +explain_reasoning(selected_tasks, skipped_tasks)
+        +get_tasks(owner, plan_date, include_completed)
+        +organize_tasks(tasks)
+        +generate_schedule(owner, plan_date, available_minutes)
+        +mark_task_complete(owner, task_id, completed_on)
     }
 
-    class Recurrence {
+    class Frequency {
         <<enumeration>>
         ONCE
         DAILY
         WEEKLY
     }
 
-    Owner "1" o-- "0..*" Pet : owns
-    Owner "1" o-- "0..*" DailyPlan : keeps
-    Pet "1" *-- "0..*" CareTask : has care tasks
-    DailyPlan "1" o-- "0..*" CareTask : schedules
-    DailyPlan --> Pet : for
-    Scheduler ..> Owner : reads constraints
-    Scheduler ..> Pet : reads care tasks
-    Scheduler ..> DailyPlan : generates
-    CareTask --> Recurrence : repeats
+    Owner "1" o-- "0..*" Pet : manages
+    Pet "1" *-- "0..*" Task : owns
+    Task --> Frequency : repeats
+    Scheduler ..> Owner : retrieves all tasks from
+    Scheduler ..> Task : organizes and completes
