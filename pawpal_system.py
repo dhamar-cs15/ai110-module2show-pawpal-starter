@@ -200,11 +200,10 @@ class Scheduler:
         return tasks
 
     def organize_tasks(self, tasks: list[Task]) -> list[Task]:
-        """Sort tasks by priority, then scheduled time, preserving input order on ties."""
+        """Sort tasks by scheduled time, putting tasks without a time last."""
         return sorted(
             tasks,
             key=lambda task: (
-                self.PRIORITY_ORDER[task.priority_level],
                 task.scheduled_time is None,
                 task.scheduled_time or time.max,
             ),
