@@ -56,6 +56,8 @@ Post asking the AI to review my skeleton, changes made:
 - Describe one tradeoff your scheduler makes.
 - Why is that tradeoff reasonable for this scenario?
 
+One algorithm that my scheduler uses is the Greedy algorithm, when it comes to generating the schedule. The algorithm first sorts the tasks by scheduled time and then appends them into the schedule greedily, placing it immediately if it fits within the remaining minutes of our schedule. This is an effective solution because we get as many tasks as possible within our schedule, making sure the time is productive and most tasks get done. The algorithm completes this in O(nlogn) time, which is mainly attributed to the sorting. The tradeoff here, though, is that we're not placing a heavy emphasis on priority levels for the sake of simplicty. The algorithm isn't picking the tasks with aboslute highest priority first, and it's not testing out different combinations of tasks to see which would optimized the schedule the MOST. An algorithm that does account for these factors would add more complexity (which is in itself a tradeoff as well).
+
 ---
 
 ## 3. AI Collaboration
@@ -73,7 +75,7 @@ I used AI for the parts in the assignment that suggested to ask the AI chatbot t
 - How did you evaluate or verify what the AI suggested?
 
 Schedule inconsistency / conflict management
-
+One small readability tweak is to track used time instead of subtracting from remaining_minutes
 
 ---
 

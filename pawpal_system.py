@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import date, time
+from datetime import date, time, timedelta
 from enum import Enum
 from uuid import UUID, uuid4
 
@@ -18,7 +18,7 @@ class Frequency(str, Enum):
 
 @dataclass
 class Task:
-    """A single pet-care activity, its schedule, and completion state."""
+    """A pet-care task or dated occurrence, with recurrence and completion state."""
 
     description: str
     duration_minutes: int
@@ -50,7 +50,11 @@ class Task:
             raise ValueError("Weekdays must use date.weekday() values from 0 to 6.")
 
     def is_due_on(self, day: date) -> bool:
-        """Whether this task is due on the given date and is still incomplete."""
+        """Return whether this task has an incomplete occurrence on ``day``.
+
+        One-time tasks use their completion flag; recurring tasks use their
+        completed-date set to track completion separately for each date.
+        """
         if not self.occurs_on(day):
             return False
         if self.frequency is Frequency.ONCE:
@@ -58,8 +62,14 @@ class Task:
         return day not in self.completed_dates
 
     def occurs_on(self, day: date) -> bool:
-        """Whether this task's recurrence falls on the given date."""
+        """Return whether this task is scheduled to occur on ``day``.
+
+        A ``scheduled_date`` restricts a recurring task to a single dated
+        occurrence; otherwise daily and weekly recurrence rules apply.
+        """
         if self.frequency is Frequency.ONCE:
+            return self.scheduled_date == day
+        if self.scheduled_date is not None:
             return self.scheduled_date == day
         if self.frequency is Frequency.WEEKLY:
             return day.weekday() in self.days_of_week
@@ -70,6 +80,8 @@ class Task:
         completed_on = completed_on or date.today()
         if not self.occurs_on(completed_on):
             raise ValueError(f"Task is not scheduled for {completed_on}.")
+        if self.completed or completed_on in self.completed_dates:
+            raise ValueError(f"Task is already completed for {completed_on}.")
         if self.frequency is Frequency.ONCE:
             self.completed = True
         else:
@@ -199,8 +211,37 @@ class Scheduler:
             tasks = [task for task in tasks if not task.completed]
         return tasks
 
+    def filter_tasks(
+        self,
+        owner: Owner,
+        *,
+        completed: bool | None = None,
+        pet_name: str | None = None,
+    ) -> list[Task]:
+        """Return owner tasks matching the optional status and pet-name filters.
+
+        Pet names are matched case-insensitively after trimming whitespace.
+        If both filters are supplied, a task must match both; the owner's task
+        lists are not modified.
+        """
+        normalized_pet_name = pet_name.strip().casefold() if pet_name is not None else None
+        if normalized_pet_name == "":
+            raise ValueError("Pet name cannot be empty.")
+
+        return [
+            task
+            for pet in owner.pets
+            if normalized_pet_name is None or pet.name.casefold() == normalized_pet_name
+            for task in pet.care_tasks
+            if completed is None or task.completed is completed
+        ]
+
     def organize_tasks(self, tasks: list[Task]) -> list[Task]:
-        """Sort tasks by scheduled time, putting tasks without a time last."""
+        """Return tasks ordered by start time, with unscheduled tasks last.
+
+        Python's stable sort preserves input order for tasks with equal times.
+        The input list is left unchanged.
+        """
         return sorted(
             tasks,
             key=lambda task: (
@@ -209,13 +250,65 @@ class Scheduler:
             ),
         )
 
+    def find_time_conflicts(
+        self,
+        tasks: list[Task],
+    ) -> list[tuple[Task, Task]]:
+        """Return each pair of timed tasks whose scheduled intervals overlap.
+
+        A task occupies the interval from its start time up to, but not
+        including, its end time. Untimed tasks are ignored. Results are sorted
+        by the first task's start time.
+        """
+        timed_tasks = sorted(
+            (
+                (task.scheduled_time.hour * 60 + task.scheduled_time.minute, task)
+                for task in tasks
+                if task.scheduled_time is not None
+            ),
+            key=lambda item: item[0],
+        )
+        conflicts: list[tuple[Task, Task]] = []
+
+        for index, (start, task) in enumerate(timed_tasks):
+            end = start + task.duration_minutes
+            for next_start, next_task in timed_tasks[index + 1 :]:
+                if next_start >= end:
+                    break
+                conflicts.append((task, next_task))
+        return conflicts
+
+    def get_time_conflict_warning(self, tasks: list[Task]) -> str | None:
+        """Describe schedule overlaps, or return ``None`` when there are none.
+
+        This is informational only: detecting conflicts does not change tasks
+        or prevent the schedule from being generated.
+        """
+        conflicts = self.find_time_conflicts(tasks)
+        if not conflicts:
+            return None
+
+        conflict_descriptions = "; ".join(
+            f"'{first.description}' overlaps with '{second.description}'"
+            for first, second in conflicts
+        )
+        return (
+            f"Schedule generated with {len(conflicts)} time conflict(s): "
+            f"{conflict_descriptions}."
+        )
+
     def generate_schedule(
         self,
         owner: Owner,
         plan_date: date,
         available_minutes: int | None = None,
     ) -> list[Task]:
-        """Return prioritized due tasks that fit the owner's available time."""
+        """Select due tasks in time order while staying within a minute budget.
+
+        This greedy strategy includes each task when it fits the remaining
+        budget and skips tasks that do not fit, continuing through the list.
+        It is not guaranteed to maximize the number or value of selected tasks.
+        """
         budget = (
             owner.time_availability_minutes
             if available_minutes is None
@@ -241,10 +334,48 @@ class Scheduler:
         task_id: UUID,
         completed_on: date | None = None,
     ) -> None:
-        """Mark one task complete by searching across all of the owner's pets."""
+        """Complete a task and add its next dated occurrence if recurring.
+
+        Daily tasks advance one day; weekly tasks advance to the next configured
+        weekday. The new occurrence is added to the same pet. One-time tasks
+        are completed without creating another instance.
+        """
         matches = [task for task in owner.get_all_tasks() if task.id == task_id]
         if not matches:
             raise KeyError(f"No task with ID {task_id} belongs to this owner.")
         if len(matches) > 1:
             raise ValueError(f"Task ID {task_id} is not unique across this owner.")
-        matches[0].mark_complete(completed_on or date.today())
+        task = matches[0]
+        pet = next(
+            pet
+            for pet in owner.pets
+            if any(owned_task is task for owned_task in pet.care_tasks)
+        )
+        completion_date = completed_on or date.today()
+        task.mark_complete(completion_date)
+
+        if task.frequency is Frequency.ONCE:
+            return
+
+        task.completed = True
+        task.scheduled_date = completion_date
+        if task.frequency is Frequency.DAILY:
+            next_date = completion_date + timedelta(days=1)
+        else:
+            days_until_next = next(
+                days_ahead
+                for days_ahead in range(1, 8)
+                if (completion_date.weekday() + days_ahead) % 7 in task.days_of_week
+            )
+            next_date = completion_date + timedelta(days=days_until_next)
+
+        next_occurrence = Task(
+            description=task.description,
+            duration_minutes=task.duration_minutes,
+            priority_level=task.priority_level,
+            frequency=task.frequency,
+            scheduled_time=task.scheduled_time,
+            scheduled_date=next_date,
+            days_of_week=set(task.days_of_week),
+        )
+        pet.add_task(next_occurrence)

@@ -146,7 +146,7 @@ st.divider()
 st.subheader("Today's schedule")
 st.caption(
     "Tasks are selected across all your pets by priority and available minutes. "
-    "Fixed-time overlaps are not checked yet."
+    "Overlapping fixed-time tasks are flagged below."
 )
 
 if st.button("Generate schedule"):
@@ -163,5 +163,8 @@ if st.button("Generate schedule"):
                 f"**{task_time_label} — {task.description}** for {pet_name_for_task} "
                 f"({task.duration_minutes} min; {task.priority_level} priority)"
             )
+        conflict_warning = scheduler.get_time_conflict_warning(schedule)
+        if conflict_warning:
+            st.warning(conflict_warning)
     else:
         st.info("No due tasks fit within the available time for this date.")

@@ -96,6 +96,24 @@ Sample test output:
 | Conflict handling | | e.g., overlapping time slots |
 | Recurring tasks | | e.g., daily vs. weekly |
 
+## Bullet point/paragraph version of Smarter Scheduling section (Phase 4)
+Task Sorting
+- Methods: Scheduler.organize_tasks()
+- What it does: it sorts the tasks by scheduled start time, in chronological order. if there are any tasks that don't have a specified scheduled time, they will go last and be given least priority
+
+Filtering
+- Methods: Scheduler.filter_tasks()
+- What it does: it can filter the owner's tasks either by pet name, completion status, or both. This allows the program to separate tasks pertaining to only one pet, or all tasks that still need to be done (or both)
+
+Conflict handling:
+- Methods: Scheduler.find_time_conflicts(), Scheduler.get_time_conflict_warning()
+- What it does: it's able to find the tasks that have a conflict (times overlap) and ignores any tasks that don't have a specified time. if there is a conflict, it makes sure to raise this as a warning so that the user knows that there are tasks trying to be scheduled at the same time 
+
+Recurring task logic:
+- Methods: Scheduler.mark_task_complete()
+- What it does: If a task is recurring, this feature looks out for when it gets completed. Once it is completed, it creates the next dated occurrence (such as for the next day if daily, or the same day in the next week)
+
+
 ## 📸 Demo Walkthrough
 
 Describe your app in numbered steps so a reader can follow along without watching a video:
